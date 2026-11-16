@@ -1,0 +1,186 @@
+{
+  "name": "Exemple fictif — assistant documentaire associatif",
+  "context": "Une association souhaite faciliter la recherche dans ses documents publics. Statu quo : recherche manuelle. Comparer une recherche améliorée et un assistant IA sur les mêmes questions.",
+  "status": "Exemple pédagogique, aucune décision",
+  "sources": "Toutes les données sont fictives. Aucun tarif commercial ni résultat mesuré. Taux des profils A et B modifiables, sans valeur de référence officielle.",
+  "rates": {
+    "police": 120,
+    "civil": 80
+  },
+  "years": 3,
+  "discount": 0,
+  "criteria": [
+    {
+      "id": "quality",
+      "name": "Qualité et utilité",
+      "weight": 40,
+      "blocking": false
+    },
+    {
+      "id": "data",
+      "name": "Données et droits d’utilisation",
+      "weight": 35,
+      "blocking": true
+    },
+    {
+      "id": "integration",
+      "name": "Intégration et exploitation",
+      "weight": 25,
+      "blocking": false
+    }
+  ],
+  "alternatives": [
+    {
+      "name": "A — Recherche améliorée",
+      "notes": "Variante pédagogique fictive. Aucun fournisseur évalué.",
+      "initial": [
+        {
+          "label": "Mise en place",
+          "amount": 1000,
+          "hours": 10,
+          "group": "civil",
+          "rate": 80,
+          "source": "Montant fictif, aucun devis fournisseur.",
+          "evidence": "hypothesis"
+        },
+        {
+          "label": "Formation au projet",
+          "amount": 0,
+          "hours": 5,
+          "group": "civil",
+          "rate": 80,
+          "source": "Montant fictif, aucun devis fournisseur.",
+          "evidence": "hypothesis"
+        }
+      ],
+      "recurring": [
+        {
+          "label": "Abonnement et exploitation",
+          "amount": 20,
+          "hours": 1,
+          "group": "civil",
+          "rate": 80,
+          "source": "Montant fictif, aucun devis fournisseur.",
+          "evidence": "hypothesis"
+        }
+      ],
+      "benefits": [
+        {
+          "label": "Recherche dans la documentation publique",
+          "group": "civil",
+          "rate": 80,
+          "volume": 1000,
+          "before": null,
+          "after": null,
+          "review": null,
+          "reuse": 100,
+          "cash": 0,
+          "source": "Temps à mesurer sur un corpus commun.",
+          "evidence": "hypothesis"
+        }
+      ],
+      "adoption": [
+        50,
+        80,
+        100
+      ],
+      "avoided": 0,
+      "scores": {
+        "quality": {
+          "score": null,
+          "evidence": "hypothesis",
+          "source": "",
+          "admissibility": "pending"
+        },
+        "data": {
+          "score": null,
+          "evidence": "hypothesis",
+          "source": "",
+          "admissibility": "pending"
+        },
+        "integration": {
+          "score": null,
+          "evidence": "hypothesis",
+          "source": "",
+          "admissibility": "pending"
+        }
+      }
+    },
+    {
+      "name": "B — Assistant IA",
+      "notes": "Variante pédagogique fictive. Aucun fournisseur évalué.",
+      "initial": [
+        {
+          "label": "Mise en place",
+          "amount": 3000,
+          "hours": 10,
+          "group": "civil",
+          "rate": 80,
+          "source": "Montant fictif, aucun devis fournisseur.",
+          "evidence": "hypothesis"
+        },
+        {
+          "label": "Formation au projet",
+          "amount": 0,
+          "hours": 5,
+          "group": "civil",
+          "rate": 80,
+          "source": "Montant fictif, aucun devis fournisseur.",
+          "evidence": "hypothesis"
+        }
+      ],
+      "recurring": [
+        {
+          "label": "Abonnement et exploitation",
+          "amount": 80,
+          "hours": 1,
+          "group": "civil",
+          "rate": 80,
+          "source": "Montant fictif, aucun devis fournisseur.",
+          "evidence": "hypothesis"
+        }
+      ],
+      "benefits": [
+        {
+          "label": "Recherche dans la documentation publique",
+          "group": "civil",
+          "rate": 80,
+          "volume": 1000,
+          "before": null,
+          "after": null,
+          "review": null,
+          "reuse": 100,
+          "cash": 0,
+          "source": "Temps à mesurer sur un corpus commun.",
+          "evidence": "hypothesis"
+        }
+      ],
+      "adoption": [
+        50,
+        80,
+        100
+      ],
+      "avoided": 0,
+      "scores": {
+        "quality": {
+          "score": null,
+          "evidence": "hypothesis",
+          "source": "",
+          "admissibility": "pending"
+        },
+        "data": {
+          "score": null,
+          "evidence": "hypothesis",
+          "source": "",
+          "admissibility": "pending"
+        },
+        "integration": {
+          "score": null,
+          "evidence": "hypothesis",
+          "source": "",
+          "admissibility": "pending"
+        }
+      }
+    }
+  ]
+}
