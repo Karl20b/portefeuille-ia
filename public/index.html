@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'self'"><title>Portefeuille IA · Benchmark & finances</title><link rel="stylesheet" href="assets/style.css"><script type="module" src="assets/app.mjs"></script></head>
+<body><a class="skip" href="#main">Aller au contenu</a>
+<header><div class="brand">Portefeuille IA <span>/ Benchmark et finances</span></div><div id="account"></div></header>
+<main id="main">
+<div class="intro"><p class="eyebrow">COMPARAISON DE PROJETS · AIDE À LA DÉCISION</p><h1>Comparer les solutions.<br>Établir leur valeur.</h1><p>Un benchmark documenté et un calcul de rentabilité pour chaque projet.</p></div>
+<div id="message" role="status" aria-live="polite"></div>
+<section id="start" class="surface"><h2>Ouvrir un portefeuille</h2><p>L’exemple fictif fonctionne sans connexion et sans base de données. Tes modifications restent dans cette page jusqu’à leur export ou leur enregistrement.</p><div class="actions"><button id="demo">Explorer un exemple fictif</button><button class="secondary" id="new">Créer un projet vide</button><label class="button secondary" for="import">Importer un JSON</label><input id="import" type="file" accept=".json,application/json" hidden></div><details><summary>Connexion à l’application hébergée</summary><form id="login"><label>Identifiant<input name="user" autocomplete="username" required maxlength="80"></label><label>Mot de passe<input name="password" type="password" autocomplete="current-password" required maxlength="1000"></label><button>Se connecter</button></form></details><div id="projects"></div></section>
+<section id="workspace" hidden>
+<div class="toolbar"><div><p class="eyebrow">PROJET EN COURS</p><h2 id="projectTitle"></h2><p id="saveState">Copie de travail</p></div><div class="actions"><button id="save">Enregistrer</button><button class="secondary" id="json">Exporter JSON</button><button class="secondary" id="csv">Tableau CSV</button><button class="secondary" id="print">Dossier / PDF</button><button class="secondary" id="home">Portefeuille</button></div></div>
+<nav aria-label="Étapes du projet"><button data-tab="context" class="active">1. Cadrage</button><button data-tab="benchmark">2. Benchmark</button><button data-tab="finance">3. Finances</button><button data-tab="report">4. Synthèse</button></nav>
+<div id="content"></div>
+</section>
+<footer>Profil A : 120 CHF/h · Profil B : 80 CHF/h · Taux fictifs à adapter à votre organisation<br>Les heures libérées représentent une capacité de travail. Leur conversion en économies budgétaires doit être justifiée.</footer>
+</main></body></html>
