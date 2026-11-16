@@ -1,0 +1,11 @@
+config/*
+!config/config.example.php
+var/*
+!var/.gitkeep
+.env
+.env.*
+*.log
+*.sql.gz
+*.zip
+.DS_Store
+node_modules/
