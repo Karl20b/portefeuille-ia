@@ -1,0 +1,16 @@
+-- New dedicated database only. No connection to existing projects required.
+CREATE TABLE IF NOT EXISTS bf_projects (
+ id CHAR(32) PRIMARY KEY,
+ version INT UNSIGNED NOT NULL DEFAULT 1,
+ document LONGTEXT NOT NULL,
+ updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+CREATE TABLE IF NOT EXISTS bf_events (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ project_id CHAR(32) NOT NULL,
+ author VARCHAR(80) NOT NULL,
+ version INT UNSIGNED NOT NULL,
+ document LONGTEXT NOT NULL,
+ created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ INDEX project_history(project_id,id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
