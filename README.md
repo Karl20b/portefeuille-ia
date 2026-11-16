@@ -58,3 +58,20 @@ Pas de récupération de mot de passe, de gestion des comptes par interface, de 
 Pour signaler un problème, ouvrir une issue en décrivant les étapes de reproduction avec un exemple fictif. Ne jamais y joindre de mots de passe, de configuration privée ou de données personnelles.
 
 Aucune licence de redistribution n’est encore définie. La rendre explicite avant de réutiliser ou redistribuer le code au-delà du partage convenu avec l’auteur.
+
+
+## Version 2 — Explorer et transposer
+
+Un nouvel onglet accompagne la recherche de cas dans d’autres secteurs : friction et lien stratégique, sources datées et niveau de preuve, mécanisme, domaines et cercle d’impact, quatre dépendances, test et cinq critères d’innovation. Les statuts sont argumentés et datés : brouillon, adopter au catalogue, surveiller ou écarter pour l’instant. Adopter au catalogue ne vaut pas autorisation de déploiement et ne déclenche aucune priorisation automatique.
+
+Les fiches retenues et documentées peuvent préparer une variante de comparaison, avec des coûts à renseigner, des gains inconnus et des notes non attribuées. Le lien vers la fiche d’origine est conservé et les doublons sont refusés. Les déclarations de vérification et de validation sont renseignées par l’utilisateur, elles ne constituent pas une certification automatique.
+
+L’aide IA est facultative et sans appel réseau : trois consignes peuvent être préparées (exploration, transposition, préparation du benchmark), relues puis téléchargées en TXT pour utilisation dans un outil autorisé. Aucun fournisseur, compte, abonnement ou clé API n’est requis. Les réponses se reprennent manuellement dans les champs ; les notes issues de l’IA restent identifiées comme brouillons. Retirer les données sensibles avant tout envoi à un outil externe. Aucun résultat trouvé ailleurs n’est automatiquement converti en gain local.
+
+L’export JSON conserve les fiches et leur journal de méthode, le CSV spécifique exporte l’analyse structurée et le dossier imprimable inclut les fiches complètes. Le CSV financier garde son format existant. La matrice domaines × cercles aide à explorer, sans imposer de remplir toutes les cases.
+
+Compatibilité : les projets et exports V1 restent lisibles. Aucune modification SQL nécessaire : le champ optionnel `exploration` est conservé dans le document JSON déjà stocké. Mettre à jour `src/validation.php`, `public/assets/explore.mjs`, `public/assets/app.mjs`, `public/assets/style.css` et `public/index.html` ensemble. Préserver la configuration privée et les données. Recharger les anciens onglets après mise à jour ; terminer/exporter auparavant le travail non enregistré.
+
+Contrôles : `node tests/explore.test.mjs` et `php tests/explore.test.php`, en complément des tests financiers. Le second vérifie les anciens projets, les statuts documentés, les sources, les dates et les liens entre fiches et variantes. Les fixtures sont entièrement fictives.
+
+Méthode : adaptation du support M3 « Benchmark intersectoriel », séance du 16.11.2026 ; inspiration : https://www.micklevy.com/ia-agents-les-meilleurs-cas-dusage-pour-lentreprise/ . Ni le support pédagogique ni le catalogue de 101 cas ne sont redistribués dans le dépôt.
