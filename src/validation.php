@@ -7,6 +7,7 @@ function num(mixed $v,float $min=0,float $max=1e12,bool $optional=false): bool {
 function rows(mixed $v,int $max=100): bool {return is_array($v)&&array_is_list($v)&&count($v)<=$max;}
 function require_valid(bool $ok): void {if(!$ok) throw new InvalidArgumentException('Données invalides : vérifier les nombres, les champs et les limites.');}
 function validate_project(array $p): void {
+ if(array_key_exists('exploration',$p)){require_valid(is_array($p['exploration']));validate_exploration($p['exploration']);}
  require_valid(txt($p['name']??null,200)&&trim($p['name'])!==''&&txt($p['context']??null)&&txt($p['status']??null,300)&&txt($p['sources']??null,20000));
  require_valid(num($p['years']??null,1,10)&&is_int($p['years'])&&num($p['discount']??null,0,100));
  foreach(['police','civil'] as $g)require_valid(num($p['rates'][$g]??null,0,10000));
@@ -19,6 +20,7 @@ function validate_project(array $p): void {
  }
  require_valid($total>0);
  foreach($p['alternatives'] as $a){
+  if(isset($a['explorationCaseId'])){require_valid(txt($a['explorationCaseId'],80)&&is_array($p['exploration']['cases']??null)&&in_array($a['explorationCaseId'],array_column($p['exploration']['cases'],'id'),true));}
   require_valid(is_array($a)&&txt($a['name']??null,200)&&txt($a['notes']??null)&&num($a['avoided']??null)&&rows($a['adoption']??null,10)&&count($a['adoption'])===$p['years']);
   foreach($a['adoption'] as $v)require_valid(num($v,0,100));
   foreach(['initial','recurring'] as $k){
@@ -34,6 +36,43 @@ function validate_project(array $p): void {
   require_valid(is_array($a['scores']??null));
   foreach($p['criteria'] as $c){$s=$a['scores'][$c['id']]??null;
    require_valid(is_array($s)&&num($s['score']??null,1,5,true)&&txt($s['source']??null,3000)&&in_array($s['admissibility']??null,['pending','ok','blocked'],true)&&in_array($s['evidence']??null,['hypothesis','quote','measured'],true));
+  }
+ }
+}
+
+function valid_exploration_date(mixed $v): bool {
+ if(!is_string($v))return false;
+ if($v==='')return true;
+ if(preg_match('/^(\d{4})-(\d{2})-(\d{2})$/D',$v,$m)!==1)return false;
+ return checkdate((int)$m[2],(int)$m[3],(int)$m[1]);
+}
+function valid_exploration_url(mixed $v): bool {
+ if(!is_string($v)||strlen($v)>12000||!filter_var($v,FILTER_VALIDATE_URL))return false;
+ $u=parse_url($v);return is_array($u)&&in_array($u['scheme']??'', ['http','https'],true)&&!empty($u['host'])&&!isset($u['user'])&&!isset($u['pass']);
+}
+function validate_exploration(array $e): void {
+ foreach(['friction','strategy','baseline','users','methodLog'] as $k)require_valid(txt($e[$k]??null));
+ require_valid(rows($e['cases']??null,20));$ids=[];
+ foreach($e['cases'] as $c){
+  require_valid(is_array($c)&&txt($c['id']??null,80)&&preg_match('/^[a-zA-Z0-9_-]+$/D',$c['id'])===1&&!isset($ids[$c['id']]));$ids[$c['id']]=true;
+  foreach(['title','organisation','sector','sourceUrl','sourceDate','checkedOn','sourceNotes','mechanism','transfer','limits','test','metrics','decisionDate','reason','reviewSignal','reviewDate','validator','aiNotes'] as $k)require_valid(txt($c[$k]??null,in_array($k,['title','organisation','sector','validator'],true)?300:12000));
+  foreach(['sourceDate','checkedOn','decisionDate','reviewDate'] as $k)require_valid(valid_exploration_date($c[$k]));
+  require_valid($c['sourceUrl']===''||valid_exploration_url($c['sourceUrl']));
+  require_valid(txt($c['secondaryDomain']??null,20));
+  $domains=['analytical','perceptive','generative','agentic'];
+  require_valid((($c['domain']??null)===''||in_array($c['domain']??null,$domains,true))&&($c['secondaryDomain']===''||in_array($c['secondaryDomain']??null,$domains,true))&&(($c['circle']??null)===''||in_array($c['circle']??null,['efficiency','service','ecosystem','innovation'],true))&&in_array($c['decision']??null,['draft','adopt','watch','discard'],true)&&in_array($c['proof']??null,['unverified','announcement','pilot','experience','measured','historical'],true));
+  require_valid(is_array($c['dependencies']??null)&&is_array($c['evaluation']??null));
+  foreach(['data','systems','skills','regulation'] as $k)require_valid(txt($c['dependencies'][$k]??null));
+  foreach(['maturity','relevance','entryCost','reversibility','horizon'] as $k)require_valid(txt($c['evaluation'][$k]??null));
+  if(in_array($c['decision'],['watch','discard','adopt'],true)){foreach(['reason','decisionDate','validator'] as $k)require_valid(trim($c[$k])!=='');}
+  if($c['decision']==='watch')require_valid(trim($c['reviewSignal'])!=='');
+  if($c['decision']==='adopt'){
+   require_valid(in_array($c['domain'],$domains,true)&&in_array($c['circle'],['efficiency','service','ecosystem','innovation'],true));
+   foreach(['friction','strategy','baseline','users'] as $k)require_valid(trim($e[$k])!=='');
+   foreach(['title','organisation','sector','sourceDate','checkedOn','sourceNotes','mechanism','transfer','limits','test','metrics'] as $k)require_valid(trim($c[$k])!=='');
+   require_valid(valid_exploration_url($c['sourceUrl'])&&in_array($c['proof'],['experience','measured','historical'],true));
+   foreach($c['dependencies'] as $value)require_valid(is_string($value)&&trim($value)!=='');
+   foreach($c['evaluation'] as $value)require_valid(is_string($value)&&trim($value)!=='');
   }
  }
 }
