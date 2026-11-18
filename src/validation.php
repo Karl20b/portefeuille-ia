@@ -7,6 +7,7 @@ function num(mixed $v,float $min=0,float $max=1e12,bool $optional=false): bool {
 function rows(mixed $v,int $max=100): bool {return is_array($v)&&array_is_list($v)&&count($v)<=$max;}
 function require_valid(bool $ok): void {if(!$ok) throw new InvalidArgumentException('Données invalides : vérifier les nombres, les champs et les limites.');}
 function validate_project(array $p): void {
+ if(array_key_exists('portfolio',$p))validate_portfolio($p['portfolio']);
  if(array_key_exists('exploration',$p)){require_valid(is_array($p['exploration']));validate_exploration($p['exploration']);}
  require_valid(txt($p['name']??null,200)&&trim($p['name'])!==''&&txt($p['context']??null)&&txt($p['status']??null,300)&&txt($p['sources']??null,20000));
  require_valid(num($p['years']??null,1,10)&&is_int($p['years'])&&num($p['discount']??null,0,100));
@@ -51,6 +52,8 @@ function valid_exploration_url(mixed $v): bool {
  $u=parse_url($v);return is_array($u)&&in_array($u['scheme']??'', ['http','https'],true)&&!empty($u['host'])&&!isset($u['user'])&&!isset($u['pass']);
 }
 function validate_exploration(array $e): void {
+ if(isset($e['approach']))require_valid(in_array($e['approach'],['undecided','internal','external','compare'],true));
+ if(isset($e['approachNotes']))require_valid(txt($e['approachNotes']));
  if(isset($e['sourceMaterial'])){require_valid(is_array($e['sourceMaterial'])&&txt($e['sourceMaterial']['reference']??null,1000)&&txt($e['sourceMaterial']['excerpt']??null,96000)&&mb_strlen($e['sourceMaterial']['excerpt'],'UTF-8')<=24000);}
  if(isset($e['frictionAnalysis'])){
   $a=$e['frictionAnalysis'];require_valid(is_array($a));
@@ -87,4 +90,11 @@ function validate_exploration(array $e): void {
    foreach($c['evaluation'] as $value)require_valid(is_string($value)&&trim($value)!=='');
   }
  }
+}
+
+function validate_portfolio(mixed $v): void {
+ require_valid(is_array($v)&&!array_is_list($v)&&in_array($v['state']??null,['active','discarded','closed'],true)&&txt($v['reason']??null,8000)&&mb_strlen($v['reason'],'UTF-8')<=2000&&is_string($v['date']??null));
+ $date=DateTimeImmutable::createFromFormat('!Y-m-d',$v['date']);require_valid($date!==false&&$date->format('Y-m-d')===$v['date']);
+ require_valid($v['state']==='active'||trim($v['reason'])!=='');
+ if(isset($v['priority']))require_valid(is_int($v['priority'])&&$v['priority']>=1&&$v['priority']<=100);
 }
