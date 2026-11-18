@@ -1,0 +1,10 @@
+{
+  "require": {
+    "smalot/pdfparser": "2.13.1",
+    "symfony/polyfill-mbstring": "1.43.3"
+  },
+  "config": {
+    "allow-plugins": false,
+    "vendor-dir": "../vendor-pdf"
+  }
+}
