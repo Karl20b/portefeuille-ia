@@ -1,0 +1,101 @@
+{
+  "name": "Test fictif",
+  "context": "",
+  "status": "Entrée du projet — besoin à explorer",
+  "sources": "",
+  "rates": {
+    "police": 120,
+    "civil": 80
+  },
+  "years": 3,
+  "discount": 0,
+  "criteria": [
+    {
+      "id": "quality",
+      "name": "Qualité et utilité métier",
+      "weight": 40,
+      "blocking": false
+    },
+    {
+      "id": "data",
+      "name": "Données, droits et admissibilité",
+      "weight": 35,
+      "blocking": true
+    },
+    {
+      "id": "integration",
+      "name": "Intégration et exploitation",
+      "weight": 25,
+      "blocking": false
+    }
+  ],
+  "alternatives": [
+    {
+      "name": "Approche à préciser après exploration",
+      "notes": "Hypothèse de travail. Prototype interne ou solution externe à étudier ; aucun choix validé.",
+      "initial": [
+        {
+          "label": "Poste à chiffrer",
+          "amount": 0,
+          "hours": 0,
+          "group": "police",
+          "rate": 120,
+          "source": "À documenter — aucun devis ni mesure",
+          "evidence": "hypothesis"
+        }
+      ],
+      "recurring": [
+        {
+          "label": "Poste à chiffrer",
+          "amount": 0,
+          "hours": 0,
+          "group": "police",
+          "rate": 120,
+          "source": "À documenter — aucun devis ni mesure",
+          "evidence": "hypothesis"
+        }
+      ],
+      "benefits": [
+        {
+          "label": "Activité à mesurer",
+          "group": "police",
+          "rate": 120,
+          "volume": null,
+          "before": null,
+          "after": null,
+          "review": null,
+          "reuse": 100,
+          "cash": 0,
+          "source": "À mesurer",
+          "evidence": "hypothesis"
+        }
+      ],
+      "adoption": [
+        100,
+        100,
+        100
+      ],
+      "avoided": 0,
+      "scores": {
+        "quality": {
+          "score": null,
+          "source": "",
+          "admissibility": "pending",
+          "evidence": "hypothesis"
+        },
+        "data": {
+          "score": null,
+          "source": "",
+          "admissibility": "pending",
+          "evidence": "hypothesis"
+        },
+        "integration": {
+          "score": null,
+          "source": "",
+          "admissibility": "pending",
+          "evidence": "hypothesis"
+        }
+      }
+    }
+  ]
+}

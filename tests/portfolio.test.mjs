@@ -1,0 +1,14 @@
+import assert from 'node:assert/strict';
+import {portfolioState,validPortfolio,partitionProjects,blankProject,approachView} from '../public/assets/portfolio.mjs';
+import {blankExploration,validExploration,explorationView} from '../public/assets/explore.mjs';
+import {connectedAiView} from '../public/assets/friction-ai.mjs';
+assert.equal(portfolioState({}),'active');assert.equal(validPortfolio(undefined),true);
+for(const v of [{state:'discarded',reason:'',date:'2026-11-18'},{state:'wrong',reason:'Motif',date:'2026-11-18'},{state:'closed',reason:'Motif',date:'2026-02-30'},{state:'active',reason:'',date:'2026-11-18',priority:0}])assert.equal(validPortfolio(v),false);
+const meta=(state,priority)=>({state,reason:'Décision explicite',date:'2026-11-18',...(priority?{priority}:{})});
+assert.ok(validPortfolio(meta('discarded')));assert.ok(validPortfolio(meta('active')));
+const input=[{id:'A',data:{portfolio:meta('active',4)}},{id:'D',data:{portfolio:meta('discarded')}},{id:'B',data:{portfolio:meta('active',1)}},{id:'C',data:{portfolio:meta('closed')}}];
+const split=partitionProjects(input);assert.deepEqual(split.active.map(x=>x.id),['B','A']);assert.deepEqual(split.archived.map(x=>x.id),['D','C']);assert.deepEqual(input.map(x=>x.id),['A','D','B','C']);
+const p=blankProject('Test fictif');p.exploration={...blankExploration(),approach:'internal',approachNotes:'Prototype à évaluer'};assert.equal(validExploration(p.exploration),true);assert.equal(p.exploration.cases.length,0);assert.equal(p.alternatives[0].benefits[0].volume,null);
+assert.equal(validExploration({...p.exploration,approach:'script'}),false);
+const esc=v=>String(v??'').replace(/[&<>"']/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]));const h={esc,field:()=>'',area:()=>'',select:()=>'',table:()=>'',notice:()=>'',connectedAi:{role:'editor',info:{available:true}}};const html=explorationView(p,0,'',h);assert.ok(html.includes('Cas observés ailleurs — facultatif'));assert.ok(html.includes('Continuer vers le cadrage'));assert.ok(html.indexOf('Entrée du projet')<html.indexOf('Explorer les frictions'));assert.ok(!html.includes('Infomaniak'));assert.ok(connectedAiView(p,{role:'editor',info:{available:true},draft:{}},esc).includes('Lancer l’analyse des frictions'));
+console.log('Portefeuille : compatibilité, statut motivé, réouverture, tri, zéro cas externe et approche facultative contrôlés.');
