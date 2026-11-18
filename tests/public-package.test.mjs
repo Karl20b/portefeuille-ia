@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';
+import {readFileSync,existsSync} from 'node:fs';
+const root=new URL('../',import.meta.url),read=p=>readFileSync(new URL(p,root),'utf8');
+const app=read('public/assets/app.mjs'),html=read('public/index.html');
+for(const [,path] of app.matchAll(/from ['"](\.\/[^'"]+)['"]/g))assert.ok(existsSync(new URL(path.split('?')[0],new URL('public/assets/',root))),path);
+assert.ok(app.includes('assets/exemple.json'));
+assert.ok(!app.includes('buildBrevet')&&!html.includes('brevetSection'));
+assert.ok(html.includes('wasm-unsafe-eval')&&html.includes("worker-src 'self'"));
+assert.ok(existsSync(new URL('src/pdf_extract_worker.php',root)));
+assert.equal(JSON.parse(read('pdf-dependencies/composer.json')).config['vendor-dir'],'../vendor-pdf');
+assert.equal(JSON.parse(read('public/assets/exemple.json')).exploration,undefined);
+assert.ok(!read('config/config.example.php').includes("'enabled' => true"));
+console.log('Paquet public : imports complets, exemple fictif, OCR et IA désactivée par défaut vérifiés.');

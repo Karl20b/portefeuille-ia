@@ -1,0 +1,11 @@
+import assert from 'node:assert/strict';
+import {mergeSource,sourcePartText,sourceImportView,importInitial} from '../public/assets/source-import.mjs';
+const doc={filename:'carte.pptx',reference:'carte.pptx · 2 parties extraites',text:'DIT\n\nFAIT',parts:[{label:'Diapositive 1',text:'DIT'},{label:'Diapositive 2',text:'FAIT'}],characters:9,warnings:['À vérifier']};
+assert.equal(sourcePartText(doc,'1'),'FAIT');assert.equal(sourcePartText(doc,'all'),doc.text);
+const existing={reference:'Entretien 1',excerpt:'Source initiale'};
+assert.equal(mergeSource(existing,doc,'DIT','0').excerpt,'Source initiale\n\nDIT');assert.equal(existing.excerpt,'Source initiale');assert.equal(mergeSource(existing,doc,'FAIT','1','replace').excerpt,'FAIT');
+assert.throws(()=>mergeSource(existing,doc,'x'.repeat(24000),'all'),/24 000/);assert.throws(()=>mergeSource(existing,doc,'','all'),/vide/);
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const state={...importInitial(),document:{...doc,filename:'<script>alert(1)</script>.pptx'},text:'<img src=x>'};const view=sourceImportView({},state,esc,'editor',{formats:['pptx','docx','txt']});assert(!view.includes('<script>'));assert(!view.includes('<img'));assert(view.includes('source-analyze'));assert(view.includes('L’import ne déclenche aucun appel IA'));assert(!view.includes('.pdf'));
+assert(sourceImportView({},importInitial(),esc,'reader',{}).includes('disabled'));
+console.log('Import source : sélection, ajout sans écrasement, remplacement explicite, limites et échappement HTML vérifiés.');
