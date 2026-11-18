@@ -22,10 +22,10 @@ L’exemple fourni est entièrement fictif. Les mesures et les notes restent à 
 
 1. Sur GitHub, choisir **Code → Download ZIP**, puis décompresser le fichier.
 2. Suivre le [guide d’installation](INSTALLATION.md).
-3. Ouvrir l’exemple fictif ou créer un projet vierge.
+3. Importer un document d’initialisation ou créer un projet vierge.
 4. Documenter les sources, mesurer les temps et exporter le travail.
 
-Sans base configurée, l’exemple et les exports fonctionnent si le dossier `public/` est servi en HTTP. L’enregistrement serveur nécessite l’installation complète. Aucune sauvegarde automatique n’a lieu en mode démonstration : exporter le JSON avant de fermer la page.
+Sans base configurée, la création d’un projet vierge et les exports fonctionnent si le dossier `public/` est servi en HTTP. L’enregistrement serveur nécessite l’installation complète. Aucune sauvegarde automatique n’a lieu en mode démonstration : exporter le JSON avant de fermer la page.
 
 GitHub héberge les sources. Le site PHP doit être installé sur un hébergement compatible ; GitHub Pages n’exécute pas PHP.
 
@@ -85,8 +85,24 @@ Méthode : adaptation du support M3 « Benchmark intersectoriel », séance du 1
 
 Dans **Explorer et transposer → Document source et carte d’empathie**, importer un document texte ou cliquer sur **Lire un scan ou une image (OCR)**. Les scans PDF, PNG, JPG/JPEG et WebP sont reconnus dans le navigateur en français et anglais, avec des composants servis par votre propre site. Aucun service de conversion externe n’est utilisé. Limites : 8 Mo par fichier et 10 pages par lecture OCR ; texte retenu de 24 000 caractères maximum. L’écriture manuscrite est peu fiable.
 
-Relire et corriger le texte reconnu, puis choisir **Utiliser le texte et préparer l’analyse IA**. Le bouton **Envoyer à Infomaniak et analyser** transmet uniquement le contexte affiché et le texte retenu au compte Infomaniak configuré par votre administrateur. Les pistes, citations et hypothèses restent à vérifier ; aucune note, économie ou décision n’est remplie automatiquement. Sans clé IA, l’import/OCR, les pistes locales, les consignes exportables et le benchmark restent utilisables après connexion.
+Relire et corriger le texte reconnu, puis choisir **Utiliser le texte et préparer l’analyse IA**. Le bouton **Lancer l’analyse des frictions** transmet uniquement le contexte affiché et le texte retenu au compte Infomaniak configuré par votre administrateur. Les pistes, citations et hypothèses restent à vérifier ; aucune note, économie ou décision n’est remplie automatiquement. Sans clé IA, l’import/OCR, les pistes locales, les consignes exportables et le benchmark restent utilisables après connexion.
 
 **Installation V3 :** consulter [le guide complet](INSTALLATION.md), notamment les sections « Installer les lecteurs de documents et l’OCR », « Activer son propre service IA » et « Mettre à jour depuis V1/V2 ». Les lecteurs OCR ne sont pas inclus dans le ZIP GitHub : la commande Python indiquée les installe (environ 74 Mo). Le dépôt ne contient ni accès MariaDB, ni clé IA, ni projets ou documents privés. Les supports originaux de cours et le classeur privé du brevet ne sont pas redistribués.
 
 Tests complémentaires : `node --test tests/*.test.mjs`, puis `php tests/friction-ai.test.php`, `php tests/source-import.test.php` et `php tests/pdf-import.test.php` après installation des dépendances PDF. Les tests utilisent des cas fictifs et ne réalisent aucun appel IA.
+
+
+## Version 4 — Entrer par le besoin et piloter son portefeuille
+
+Parcours : document d’initialisation → explorer les frictions → cas observés ailleurs **facultatif** → prototype interne ou solution externe à étudier → cadrage → benchmark et finances. « Importer un document » crée une copie de travail nommée d’après le fichier ; le texte est à relire avant de le retenir comme source. La restauration JSON reste disponible dans un volet secondaire. L’exemple fictif JSON est conservé pour les tests et les anciennes sauvegardes.
+
+Le bouton **Tous mes projets** revient à l’accueil. En cas de modifications, choisir enregistrer et revenir, revenir sans enregistrer, ou continuer. **Écarter ou clôturer** demande un motif et conserve le projet et son historique : les projets écartés/clôturés sont rangés dans une section distincte et peuvent être rouverts. Aucun projet d’un collègue n’est écarté automatiquement. Les noms de fournisseur restent dans la configuration technique et les métadonnées, tandis que l’interface parle simplement d’analyse IA.
+
+Pas de migration SQL : `portfolio` et l’approche envisagée sont des champs JSON facultatifs. Mettre à jour l’interface et `src/validation.php` ensemble en préservant configuration, base et lecteurs installés. Tests supplémentaires : `node tests/portfolio.test.mjs` et `php tests/portfolio.test.php`.
+
+
+## Version 4 — Parcours projet et portefeuille
+
+Le parcours commence par **Importer un document** : entrée du projet → exploration des frictions → cas observé ailleurs facultatif → prototype interne ou solution externe → cadrage. Il est possible de poursuivre sans cas intersectoriel et de laisser l’approche à préciser. Le raccourci de démonstration a été retiré de l’accueil ; la restauration JSON se trouve dans une rubrique distincte.
+
+**Tous mes projets** ramène au portefeuille. Si des modifications sont en cours, choisir de les enregistrer, de revenir sans les enregistrer ou de continuer le projet. Les projets peuvent être écartés ou clôturés avec un motif, puis rouverts ; leurs versions restent conservées. Chaque installation choisit son propre périmètre : aucun recentrage ni projet privé de l’auteur n’est importé. Les libellés de l’assistant restent indépendants du nom du fournisseur ; la configuration technique du service reste privée.
