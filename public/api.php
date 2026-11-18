@@ -1,6 +1,10 @@
 <?php
 declare(strict_types=1);
+// Keep PHP diagnostics in the server log, never mixed with the JSON response.
+ini_set('display_errors','0');
 require __DIR__.'/../src/validation.php';
+require __DIR__.'/../src/friction_ai.php';
+require __DIR__.'/../src/source_import.php';
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
 header('X-Content-Type-Options: nosniff');
@@ -20,11 +24,18 @@ $action=$_GET['action']??'session';
 try {
  if($method==='POST'){
   if(($_SERVER['HTTP_ORIGIN']??'')!==$config['origin'] || !hash_equals($_SESSION['csrf'],$_SERVER['HTTP_X_CSRF_TOKEN']??''))respond(['error'=>'Session ou origine invalide. Recharge la page.'],403);
+  if($action==='import-source'){
+   if(!isset($_SESSION['user']))respond(['error'=>'Connexion nécessaire.'],401);
+   if(($_SESSION['role']??'')!=='editor')respond(['error'=>'Import réservé aux comptes de rédaction.'],403);
+   if((int)($_SERVER['CONTENT_LENGTH']??0)>9437184)respond(['error'=>'Document trop volumineux : 8 Mo maximum.'],413);
+   $input=[];
+  }else{
   if((int)($_SERVER['CONTENT_LENGTH']??0)>1048576)respond(['error'=>'Document trop volumineux.'],413);
   $raw=file_get_contents('php://input',false,null,0,1048577);
   if(strlen($raw)>1048576)respond(['error'=>'Document trop volumineux.'],413);
   $input=json_decode($raw,true,32,JSON_THROW_ON_ERROR);
   if(!is_array($input))respond(['error'=>'Requête invalide.'],400);
+  }
  }
  if($action==='session'&&$method==='GET')respond(['user'=>$_SESSION['user']??null,'role'=>$_SESSION['role']??null,'csrf'=>$_SESSION['csrf']]);
  if($action==='login'&&$method==='POST'){
@@ -50,6 +61,33 @@ try {
  if(!isset($_SESSION['user']))respond(['error'=>'Connexion nécessaire.'],401);
  $_SESSION['last']=time();
  if($action==='logout'&&$method==='POST'){$_SESSION=[];session_regenerate_id(true);respond(['ok'=>true]);}
+ if($action==='friction-method'&&$method==='GET'){
+  try{friction_ai_config($config);$available=true;}catch(FrictionAiException){$available=false;}
+  respond(['available'=>$available,'provider'=>'Infomaniak AI Services','method'=>friction_ai_method(),'dailyLimit'=>20,'documentImport'=>source_import_capabilities()]);
+ }
+ if($action==='import-source'&&$method==='POST'){
+  $file=$_FILES['document']??null;
+  if(!is_array($file)||count($_FILES)!==1||!is_string($file['name']??null)||!is_string($file['tmp_name']??null))respond(['error'=>'Choisis un seul document source.'],422);
+  if(($file['error']??UPLOAD_ERR_NO_FILE)!==UPLOAD_ERR_OK)respond(['error'=>'Import incomplet ou fichier trop volumineux pour le serveur (8 Mo maximum).'],422);
+  if(!is_uploaded_file($file['tmp_name']))respond(['error'=>'Fichier importé invalide.'],422);
+  $document=source_import_extract($file['tmp_name'],$file['name']);
+  respond(['document'=>$document]);
+ }
+ if($action==='analyze-frictions'&&$method==='POST'){
+  if($_SESSION['role']!=='editor')respond(['error'=>'Analyse réservée aux comptes de rédaction.'],403);
+  if(($input['consent']??false)!==true)respond(['error'=>'Vérifier le contexte à envoyer avant l’analyse.'],422);
+  $context=friction_ai_context($input['context']??null);friction_ai_config($config);
+  $lock=fopen($config['throttle_dir'].'/friction-ai-'.hash('sha256',$_SESSION['user']).'.json','c+');
+  if(!$lock)throw new RuntimeException('Throttle unavailable');chmod($config['throttle_dir'].'/friction-ai-'.hash('sha256',$_SESSION['user']).'.json',0600);
+  if(!flock($lock,LOCK_EX|LOCK_NB)){fclose($lock);respond(['error'=>'Une analyse est déjà en cours pour ce compte.'],429);}
+  try{
+   $budget=friction_ai_reserve(json_decode(stream_get_contents($lock),true)?:[],time());
+   ftruncate($lock,0);rewind($lock);fwrite($lock,json_encode($budget,JSON_THROW_ON_ERROR));fflush($lock);
+   // Release the session while waiting for the provider; the separate budget lock prevents duplicate calls.
+   session_write_close();$result=friction_ai_generate($config,$context);
+  }finally{flock($lock,LOCK_UN);fclose($lock);}
+  respond(['analysis'=>$result]);
+ }
  if(!in_array($action,['projects','save'],true))respond(['error'=>'Action inconnue.'],404);
  if($action==='save'&&($method!=='POST'||$_SESSION['role']!=='editor'))respond(['error'=>'Écriture non autorisée.'],403);
  // Connection starts only after authenticated, supported requests.
@@ -70,5 +108,7 @@ try {
   respond(['id'=>$id,'version'=>$newVersion]);
  }
  respond(['error'=>'Méthode non prise en charge.'],405);
-} catch(InvalidArgumentException|JsonException $e){respond(['error'=>'Données invalides. Vérifier les champs.'],422);}
+} catch(SourceImportException $e){respond(['error'=>$e->getMessage()],422);}
+catch(FrictionAiException $e){respond(['error'=>$e->getMessage()],503);}
+catch(InvalidArgumentException|JsonException $e){respond(['error'=>'Données invalides. Vérifier les champs et les limites du contexte.'],422);}
 catch(Throwable $e){if(isset($db)&&$db->inTransaction())$db->rollBack();error_log('Benchmark finance: '.$e::class);respond(['error'=>'Service indisponible. Aucun enregistrement confirmé.'],503);}
