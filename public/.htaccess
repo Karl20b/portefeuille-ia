@@ -1,6 +1,17 @@
 Require all granted
 Options -Indexes
 DirectoryIndex index.html
+# Revalidate the interface on every visit, including on another computer.
+# ETag/Last-Modified still allow lightweight 304 responses for unchanged files.
+<IfModule mod_headers.c>
+<FilesMatch "\.(html|mjs|js|css)$">
+Header always set Cache-Control "no-cache, max-age=0, must-revalidate"
+</FilesMatch>
+</IfModule>
 <FilesMatch "^\\.">
 Require all denied
 </FilesMatch>
+
+<IfModule mod_mime.c>
+AddType application/wasm .wasm
+</IfModule>

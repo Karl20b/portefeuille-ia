@@ -1,7 +1,13 @@
-import {blankExploration,blankCase,validExploration,adoptionGaps,buildPrompt,explorationView,explorationReport,explorationRows} from './explore.mjs?v=2';
+import {blankExploration,blankCase,validExploration,adoptionGaps,buildPrompt,explorationView,explorationReport,explorationRows} from './explore.mjs?v=10';
+import {prepareOcr,recognizeOcr,ocrRange} from './ocr-source.mjs?v=1';
+import {importInitial,sourcePartText,mergeSource} from './source-import.mjs?v=4';
+import {aiContext,validFrictionAnalysis,frictionAnalysisText} from './friction-ai.mjs?v=4';
+import {frictionGuideText} from './frictions.mjs?v=1';
 import {calculate,benchmark,money} from './finance.mjs';
 const $=s=>document.querySelector(s), esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let exploreSelected=0,aiPrompt='';
+let sourceImport=importInitial(),sourceOcrJob=null,sourceOcrController=null;
+let connectedAi={info:null,draft:null,result:null,busy:false,error:''};
+let exploreSelected=0,aiPrompt='',frictionGuideOpen=false;
 let project=null,id=null,version=0,tab='context',selected=0,user=null,role=null,csrf='',dirty=false,projects=[];
 const clone=x=>JSON.parse(JSON.stringify(x));
 const msg=t=>{$('#message').textContent=t;};
@@ -21,21 +27,24 @@ function metric(title,v,sub=''){return `<div class="metric"><small>${esc(title)}
 function table(headers,rows){return `<div class="table-wrap"><table><thead><tr>${headers.map(h=>`<th scope="col">${esc(h)}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;}
 async function api(action,data){
  const r=await fetch(`api.php?action=${encodeURIComponent(action)}`,data?{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':csrf},body:JSON.stringify(data),credentials:'same-origin'}:{credentials:'same-origin'});
- let d;try{d=await r.json();}catch{throw Error('Le serveur PHP n’est pas disponible dans cet aperçu.');}
+ let d;try{d=await r.json();}catch{throw Error(`Réponse du serveur illisible (HTTP ${r.status}). La fiche reste inchangée ; réessaye plus tard.`);}
  if(!r.ok)throw Error(d.error||'Requête refusée');return d;
 }
-async function session(){try{const d=await api('session');({user,role,csrf}=d);account();if(user)await loadProjects();}catch{account();}}
+async function aiInfo(){try{connectedAi.info=await api('friction-method');}catch{connectedAi.info=null;}}
+async function session(){try{const d=await api('session');({user,role,csrf}=d);account();if(user){await aiInfo();await loadProjects();}}catch{account();}}
 function account(){
+
+ const loginPanel=$('.login-panel');if(loginPanel)loginPanel.hidden=!!user;
  $('#account').replaceChildren();
- const s=document.createElement('span');s.textContent=user?`${user} · ${role==='editor'?'Rédaction':'Lecture'}`:'Aperçu local';$('#account').append(s);
- if(user){const b=document.createElement('button');b.textContent='Déconnexion';b.className='secondary';b.addEventListener('click',async()=>{if(!guard())return;try{await api('logout',{});user=null;role=null;projects=[];project=null;dirty=false;account();home();await session();}catch(e){msg(e.message);}});$('#account').append(b);}
+ const s=document.createElement('span');s.textContent=user?`${user} · ${role==='editor'?'Rédaction':'Lecture'}`:'Non connecté · aperçu';$('#account').append(s);
+ if(user){const b=document.createElement('button');b.textContent='Déconnexion';b.className='secondary';b.addEventListener('click',async()=>{if(!guard())return;try{await api('logout',{});user=null;role=null;connectedAi={info:null,draft:null,result:null,busy:false,error:''};projects=[];project=null;dirty=false;account();home();await session();}catch(e){msg(e.message);}});$('#account').append(b);}
 }
-function guard(){return !dirty||confirm('Des modifications ne sont pas enregistrées. Les exporter avant de continuer ? Annuler pour garder cette page.');}
-function open(p,record=null){project=clone(p);project.exploration??=blankExploration();exploreSelected=0;aiPrompt='';id=record?.id??null;version=record?.version??0;selected=0;dirty=false;tab='explore';$('#start').hidden=true;$('#workspace').hidden=false;render();msg('');}
-function home(){if(!guard())return;$('#workspace').hidden=true;$('#start').hidden=false;renderProjects();}
+function guard(){if(sourceImport.busy){msg('Attendre la fin de l’extraction avant de changer de projet.');return false;}if(connectedAi.busy){msg('Attendre la fin de l’analyse avant de changer de projet.');return false;}return !dirty||confirm('Des modifications ne sont pas enregistrées. Les exporter avant de continuer ? Annuler pour garder cette page.');}
+function open(p,record=null){if(sourceImport.busy){msg('Attendre la fin de l’extraction.');return;}if(sourceOcrJob){sourceOcrJob.destroy().catch(()=>{});sourceOcrJob=null;}sourceImport=importInitial();if(connectedAi.busy){msg('Attendre la fin de l’analyse avant de changer de projet.');return;}connectedAi={...connectedAi,draft:null,result:null,error:''};project=clone(p);project.exploration??=blankExploration();project.exploration.sourceMaterial??={reference:'',excerpt:''};exploreSelected=0;aiPrompt='';frictionGuideOpen=false;id=record?.id??null;version=record?.version??0;selected=0;dirty=false;tab='explore';$('#start').hidden=true;$('#workspace').hidden=false;document.body.classList.add('project-open');render();msg('');}
+function home(){if(!guard())return;$('#workspace').hidden=true;$('#start').hidden=false;document.body.classList.remove('project-open');renderProjects();}
 function renderProjects(){
- $('#projects').innerHTML=projects.length?'<h3>Projets enregistrés</h3>':'';
- projects.forEach(r=>{const b=document.createElement('button');b.className='secondary';b.textContent=r.data.name+' · v'+r.version;b.addEventListener('click',()=>{if(guard())open(r.data,r);});$('#projects').append(b);});
+ $('#projects').innerHTML=projects.length?`<h3>Projets enregistrés <span class="count">${projects.length}</span></h3><div class="project-grid"></div>`:'';
+ projects.forEach((r,i)=>{const b=document.createElement('button');b.className='secondary project-card';b.innerHTML=`<span class="project-number" aria-hidden="true">${String(i+1).padStart(2,'0')}</span><span><strong>${esc(r.data.name)}</strong><span class="project-description">${esc(r.data.status)}</span><span class="project-meta"><span>Version ${esc(r.version)}</span><span>${r.data.alternatives.length} variante${r.data.alternatives.length===1?'':'s'}</span><span>${r.data.exploration?.cases?.length??0} référence${r.data.exploration?.cases?.length===1?'':'s'}</span></span></span><span class="project-arrow" aria-hidden="true">↗</span>`;b.addEventListener('click',()=>{if(guard())open(r.data,r);});$('#projects .project-grid').append(b);});
 }
 async function loadProjects(){const d=await api('projects');projects=d.projects;renderProjects();}
 function blankRow(){return {label:'Nouveau poste',amount:0,hours:0,group:'police',rate:120,source:'',evidence:'hypothesis'};}
@@ -47,8 +56,8 @@ function render(){
  if(!project)return;$('#projectTitle').textContent=project.name;$('#saveState').textContent=dirty?'Modifications non enregistrées':id?`Version ${version} enregistrée`:'Copie locale · exporter pour conserver';
  $('#save').disabled=!user||role!=='editor';$('#save').title=user?'Enregistrer dans la base dédiée':'Connexion nécessaire pour enregistrer sur le serveur';
  document.querySelectorAll('[data-tab]').forEach(b=>{b.classList.toggle('active',b.dataset.tab===tab);b.setAttribute('aria-current',b.dataset.tab===tab?'step':'false');});
- $('#content').innerHTML=({explore:()=>explorationView(project,exploreSelected,aiPrompt,{esc,field,area,select,notice,table}),context:contextView,benchmark:benchmarkView,finance:financeView,report:reportView}[tab])();
- if(role==='reader')$('#content').querySelectorAll('input,textarea,select,button[data-action]').forEach(e=>e.disabled=true);
+ $('#content').innerHTML=({explore:()=>explorationView(project,exploreSelected,aiPrompt,{esc,field,area,select,notice,table,showFrictions:frictionGuideOpen,sourceImport,connectedAi:{...connectedAi,role}}),context:contextView,benchmark:benchmarkView,finance:financeView,report:reportView}[tab])();
+ if(role==='reader')$('#content').querySelectorAll('input,textarea,select,button[data-action]').forEach(e=>{if(!['friction-guide','export-frictions'].includes(e.dataset.action))e.disabled=true;});
 }
 function contextView(){return `<section class="panel"><h2>Le besoin et les hypothèses communes</h2><div class="grid">${field('Nom du projet','name')}${field('Statut / décision','status')}${area('Travail actuel, friction, statu quo et périmètre','context')}${area('Sources et références du projet','sources')}</div><div class="grid three">${field('Profil A · CHF/h, coût complet','rates.police','number','min="0" max="10000" step="0.01"')}${field('Profil B · CHF/h, coût complet','rates.civil','number','min="0" max="10000" step="0.01"')}${field('Horizon · années (1 à 10)','years','number','min="1" max="10" step="1"')}${field('Actualisation annuelle · %','discount','number','min="0" max="100" step="0.1"')}</div>${notice('Les taux RH incluent déjà les charges et le poste de travail. Ne pas ajouter ces frais une seconde fois. Une prestation externe remplace les heures internes correspondantes. Tous les montants sont en CHF, sur une même base de TVA à préciser dans les sources.')}<h3>Variantes à comparer au statu quo</h3>${project.alternatives.map((a,i)=>`<div class="alt">${field('Nom de la variante',`alternatives.${i}.name`)}${area('Périmètre, limites, devis et hypothèses',`alternatives.${i}.notes`)}</div>`).join('')}<button data-action="add-alt" class="secondary">Ajouter une variante</button><p class="hint">Un projet peut comparer un achat, une intégration ou un développement. Le statu quo est décrit ci-dessus ; les gains et surcoûts sont calculés par rapport à lui.</p></section>`;}
 function benchmarkView(){
@@ -59,7 +68,7 @@ function costRows(kind,title){const a=project.alternatives[selected],base=`alter
  return `<h3>${title}</h3>${table(['Poste et preuve','Dépense externe CHF','Travail interne','Actions'],a[kind].map((r,j)=>{const path=`${base}.${j}`;return [field('Libellé',path+'.label')+field('Source / devis / date',path+'.source')+evidence(path+'.evidence'),field(kind==='initial'?'Montant initial':'Montant par mois',path+'.amount','number','min="0" step="0.01"'),field(kind==='initial'?'Heures initiales':'Heures par mois',path+'.hours','number','min="0" step="0.1"')+group(path+'.group')+field('CHF/h si taux spécifique',path+'.rate','number','min="0" step="0.01"'),`<button class="danger" data-action="remove-cost" data-kind="${kind}" data-index="${j}">Retirer ce poste</button>`];}))}<button class="secondary" data-action="add-cost" data-kind="${kind}">Ajouter un poste</button>`;
 }
 function financeView(){const a=project.alternatives[selected],base=`alternatives.${selected}`;
- return `<section class="panel"><h2>Coûts et gains différentiels</h2>${alternativePicker()}${notice('Renseigner les surcoûts et les gains par rapport au statu quo. Le temps après IA comprend son utilisation ; la relecture, les corrections et les reprises sont saisies séparément. Des temps négatifs nets restent des pertes et sont conservés dans le calcul.')}<details open><summary>1. Mise en œuvre et formation</summary>${costRows('initial','Investissement initial')}</details><details><summary>2. Fonctionnement mensuel</summary>${costRows('recurring','Charges récurrentes par mois')}</details><details open><summary>3. Activités et temps économisé</summary><p class="hint">Séparer profil A et profil B. Le volume annuel représente des occurrences, par exemple des personnes × des jours × des tâches. Éviter de compter une même activité dans plusieurs lignes ou projets.</p>${a.benefits.map((r,j)=>{const path=`${base}.benefits.${j}`;return `<div class="alt">${field('Activité',path+'.label')}<div class="grid three">${group(path+'.group')}${field('CHF/h si taux spécifique',path+'.rate','number','min="0" step="0.01"')}${field('Occurrences annuelles à plein usage',path+'.volume','number','min="0" step="1"')}${field('Avant IA · minutes / occurrence',path+'.before','number','min="0" step="0.01"')}${field('Avec IA, hors contrôle · minutes',path+'.after','number','min="0" step="0.01"')}${field('Relecture, corrections, reprises · minutes',path+'.review','number','min="0" step="0.01"')}${field('Temps réellement réutilisable · %',path+'.reuse','number','min="0" max="100" step="1"')}${field('Part convertible en économie salariale · %',path+'.cash','number','min="0" max="100" step="1"')}${evidence(path+'.evidence')}</div>${area('Source, date, protocole de mesure et justification des économies',path+'.source')}${a.benefits.length>1?`<button class="danger" data-action="remove-benefit" data-index="${j}">Retirer cette activité</button>`:''}</div>`;}).join('')}<button data-action="add-benefit" class="secondary">Ajouter une activité / un profil</button></details><h3>4. Adoption et autres dépenses évitées</h3><p class="hint">Les coûts récurrents restent payés à 100 %. L’adoption réduit uniquement les gains. Cette règle prudente ne modélise pas automatiquement les économies d’API liées à une utilisation plus faible.</p><div class="grid three">${a.adoption.map((v,y)=>field(`Usage effectif année ${y+1} · % du volume`,base+`.adoption.${y}`,'number','min="0" max="100" step="1"')).join('')}${field('Autres dépenses évitées · CHF/an',base+'.avoided','number','min="0" step="0.01"')}</div><p class="hint">Les autres dépenses évitées doivent être réellement supprimées et documentées dans les notes de la variante ; elles sont comptées dès la première année, à 100 %.</p><button data-action="refresh">Calculer les résultats</button><h3>Résultat de la variante</h3>${result(a)}</section>`;
+ return `<section class="panel"><h2>Coûts et gains différentiels</h2>${alternativePicker()}${notice('Renseigner les surcoûts et les gains par rapport au statu quo. Le temps après IA comprend son utilisation ; la relecture, les corrections et les reprises sont saisies séparément. Des temps négatifs nets restent des pertes et sont conservés dans le calcul.')}<details open><summary>1. Mise en œuvre et formation</summary>${costRows('initial','Investissement initial')}</details><details><summary>2. Fonctionnement mensuel</summary>${costRows('recurring','Charges récurrentes par mois')}</details><details open><summary>3. Activités et temps économisé</summary><p class="hint">Séparer les profils de coût A et B. Le volume annuel représente des occurrences, par exemple des personnes × des jours × des tâches. Éviter de compter une même activité dans plusieurs lignes ou projets.</p>${a.benefits.map((r,j)=>{const path=`${base}.benefits.${j}`;return `<div class="alt">${field('Activité',path+'.label')}<div class="grid three">${group(path+'.group')}${field('CHF/h si taux spécifique',path+'.rate','number','min="0" step="0.01"')}${field('Occurrences annuelles à plein usage',path+'.volume','number','min="0" step="1"')}${field('Avant IA · minutes / occurrence',path+'.before','number','min="0" step="0.01"')}${field('Avec IA, hors contrôle · minutes',path+'.after','number','min="0" step="0.01"')}${field('Relecture, corrections, reprises · minutes',path+'.review','number','min="0" step="0.01"')}${field('Temps réellement réutilisable · %',path+'.reuse','number','min="0" max="100" step="1"')}${field('Part convertible en économie salariale · %',path+'.cash','number','min="0" max="100" step="1"')}${evidence(path+'.evidence')}</div>${area('Source, date, protocole de mesure et justification des économies',path+'.source')}${a.benefits.length>1?`<button class="danger" data-action="remove-benefit" data-index="${j}">Retirer cette activité</button>`:''}</div>`;}).join('')}<button data-action="add-benefit" class="secondary">Ajouter une activité / un profil</button></details><h3>4. Adoption et autres dépenses évitées</h3><p class="hint">Les coûts récurrents restent payés à 100 %. L’adoption réduit uniquement les gains. Cette règle prudente ne modélise pas automatiquement les économies d’API liées à une utilisation plus faible.</p><div class="grid three">${a.adoption.map((v,y)=>field(`Usage effectif année ${y+1} · % du volume`,base+`.adoption.${y}`,'number','min="0" max="100" step="1"')).join('')}${field('Autres dépenses évitées · CHF/an',base+'.avoided','number','min="0" step="0.01"')}</div><p class="hint">Les autres dépenses évitées doivent être réellement supprimées et documentées dans les notes de la variante ; elles sont comptées dès la première année, à 100 %.</p><button data-action="refresh">Calculer les résultats</button><h3>Résultat de la variante</h3>${result(a)}</section>`;
 }
 function result(a){const r=calculate(project,a);
  const hypothesis=a.benefits.some(b=>b.evidence!=='measured')||a.initial.some(b=>b.evidence==='hypothesis')||a.recurring.some(b=>b.evidence==='hypothesis');
@@ -90,7 +99,44 @@ function exportCsv(){
  const cell=v=>{if(v==null)return '"À mesurer"';if(typeof v==='number')return String(Math.round(v*100)/100).replace('.',',');const s=String(v);return '"'+(/^[\s]*[=+@\-]/.test(s)?"'":'')+s.replace(/"/g,'""')+'"';};
  download('benchmark-finances.csv','text/csv;charset=utf-8','\ufeff'+rows.map(r=>r.map(cell).join(';')).join('\r\n'));
 }
+async function prepareSourceOcr(file){
+ if(!file||sourceImport.busy||connectedAi.busy||role!=='editor')return;
+ const owner=project;sourceImport={...importInitial(),busy:true,ocrActive:true,open:true};render();
+ if(sourceOcrJob){await sourceOcrJob.destroy().catch(()=>{});sourceOcrJob=null;}
+ const controller=new AbortController();sourceOcrController=controller;const timer=setTimeout(()=>controller.abort(),30000);
+ const progress=t=>{if(controller.signal.aborted)return;sourceImport.progress=t;if($('#sourceOcrStatus'))$('#sourceOcrStatus').textContent=t;};
+ try{const job=await prepareOcr(file,{signal:controller.signal,onProgress:progress});if(project!==owner){await job.destroy();return;}sourceOcrJob=job;sourceImport={...importInitial(),open:true,ocrSetup:{filename:file.name,pages:job.pages,kind:job.kind},ocrStart:1,ocrEnd:Math.min(10,job.pages)};}
+ catch(err){sourceImport.error=err.name==='AbortError'?'Préparation OCR annulée ou délai dépassé.':err.message;}
+ finally{clearTimeout(timer);sourceOcrController=null;sourceImport.busy=false;sourceImport.ocrActive=false;render();}
+}
+async function runSourceOcr(){
+ if(sourceImport.busy||!sourceOcrJob||role!=='editor')return;
+ let range;try{range=ocrRange(sourceImport.ocrStart,sourceImport.ocrEnd,sourceOcrJob.pages);}catch(err){sourceImport.error=err.message;render();return;}
+ const owner=project,job=sourceOcrJob;sourceImport={...sourceImport,busy:true,ocrActive:true,error:'',document:null};render();
+ const controller=new AbortController();sourceOcrController=controller;const timer=setTimeout(()=>controller.abort(),180000);
+ const progress=t=>{if(controller.signal.aborted)return;sourceImport.progress=t;if($('#sourceOcrStatus'))$('#sourceOcrStatus').textContent=t;};
+ try{const doc=await recognizeOcr(job,{...range,signal:controller.signal,onProgress:progress});if(project===owner)sourceImport={...importInitial(),document:doc,text:doc.text,open:true};}
+ catch(err){sourceImport.error=err.name==='AbortError'?'Reconnaissance OCR annulée ou délai maximal dépassé. Essaie moins de pages.':err.message;}
+ finally{clearTimeout(timer);await job.destroy().catch(()=>{});sourceOcrJob=null;sourceOcrController=null;sourceImport.busy=false;sourceImport.ocrActive=false;sourceImport.ocrSetup=null;render();$('#sourceImportPreviewTitle')?.focus();}
+}
+async function importSourceDocument(file){
+ if(!file||sourceImport.busy||connectedAi.busy||role!=='editor')return;
+ const formats=connectedAi.info?.documentImport?.formats||['pptx','docx','txt'],ext=file.name.split('.').pop().toLowerCase();
+ if(['png','jpg','jpeg','webp'].includes(ext)&&connectedAi.info?.documentImport?.ocr){await prepareSourceOcr(file);return;}
+ if(!formats.includes(ext)||file.size<1||file.size>8388608){sourceImport={...sourceImport,error:'Format non pris en charge ou fichier vide/trop volumineux (8 Mo maximum).',open:true};render();return;}
+ const owner=project;let retryOcr=false;sourceImport={...importInitial(),busy:true,open:true};render();
+ try{const form=new FormData();form.append('document',file);const r=await fetch('api.php?action=import-source',{method:'POST',credentials:'same-origin',headers:{'X-CSRF-Token':csrf},body:form});let d;try{d=await r.json();}catch{throw Error('Le serveur n’a pas pu extraire ce document. Essaie un fichier plus petit.');}if(!r.ok)throw Error(d.error||'Import refusé.');if(!d.document?.parts?.length||typeof d.document.text!=='string')throw Error('Texte extrait invalide.');if(project===owner)sourceImport={...importInitial(),document:d.document,text:d.document.text,open:true};}
+ catch(err){sourceImport={...sourceImport,error:err.message};retryOcr=ext==='pdf'&&connectedAi.info?.documentImport?.ocr&&/OCR|Aucun texte/i.test(err.message);}
+ finally{sourceImport.busy=false;render();$('#sourceImportPreviewTitle')?.focus();}
+ if(retryOcr&&project===owner)await prepareSourceOcr(file);
+}
 function commitInput(e){
+ if(e.target.id==='sourceOcrDocument'){if(e.type==='change')prepareSourceOcr(e.target.files[0]);return;}
+ if(e.target.id==='sourceDocument'){if(e.type==='change')importSourceDocument(e.target.files[0]);return;}
+ if(e.target.dataset.importField){const key=e.target.dataset.importField;sourceImport[key]=e.target.value;if(key==='part'&&e.type==='change'){sourceImport.text=sourcePartText(sourceImport.document,sourceImport.part);render();}return;}
+
+ if(e.target.dataset.aiField){if(connectedAi.draft)connectedAi.draft[e.target.dataset.aiField]=e.target.value;return;}
+
  if(e.target.id==='explore-case'){exploreSelected=Number(e.target.value);aiPrompt='';render();return;}
  if(e.target.id==='alternative'){selected=Number(e.target.value);render();return;}
  const path=e.target.dataset.path;if(!path)return;
@@ -105,10 +151,46 @@ function commitInput(e){
 }
 $('#content').addEventListener('input',commitInput);
 $('#content').addEventListener('change',commitInput);
-$('#content').addEventListener('click',e=>{
+$('#content').addEventListener('click',async e=>{
  const b=e.target.closest('[data-action]');if(!b)return;const action=b.dataset.action,a=project.alternatives[selected];
+ if(action==='friction-guide'){frictionGuideOpen=true;render();$('#frictionGuideTitle')?.focus();msg('Pistes de friction affichées : hypothèses préparées localement, à vérifier sur le terrain. La fiche du projet reste inchangée.');return;}
+ if(action==='export-frictions'){download('pistes-de-friction.txt','text/plain;charset=utf-8',frictionGuideText(project));return;}
  if(role==='reader')return;
  const ex=project.exploration,c=ex.cases[exploreSelected];
+ if(action==='source-ocr-choose'){if(!sourceImport.busy&&!connectedAi.busy)$('#sourceOcrDocument')?.click();return;}
+ if(action==='source-ocr-run'){await runSourceOcr();return;}
+ if(action==='source-ocr-cancel'){sourceOcrController?.abort();return;}
+ if(action==='source-ocr-dismiss'){if(sourceOcrJob){await sourceOcrJob.destroy().catch(()=>{});sourceOcrJob=null;}sourceImport={...importInitial(),open:true};render();return;}
+ if(action==='source-choose'){if(!sourceImport.busy&&!connectedAi.busy)$('#sourceDocument')?.click();return;}
+ if(action==='source-dismiss'){sourceImport={...importInitial(),open:true};render();return;}
+ if(action==='source-use'||action==='source-analyze'){
+  if(!sourceImport.document)return;
+  try{if(sourceImport.mode==='append'&&sourceImport.text.trim()&&ex.sourceMaterial.excerpt.includes(sourceImport.text.trim()))throw Error('Ce passage est déjà dans la source.');ex.sourceMaterial=mergeSource(ex.sourceMaterial,sourceImport.document,sourceImport.text,sourceImport.part,sourceImport.mode);sourceImport={...importInitial(),open:true};changed();
+   if(action==='source-analyze'){connectedAi.draft=aiContext(project);connectedAi.error='';}render();
+   if(action==='source-analyze')$('#connectedFrictionAi h4')?.scrollIntoView({block:'start',behavior:'instant'});
+   msg(action==='source-analyze'?'Source ajoutée. Vérifie le contexte avant son envoi à Infomaniak.':'Texte ajouté à la source de travail. Clique sur Enregistrer pour le conserver.');
+  }catch(err){sourceImport.error=err.message;render();}return;
+ }
+ if(action==='friction-preview'){if(connectedAi.busy)return;connectedAi.draft=aiContext(project);connectedAi.error='';render();$('#connectedFrictionAi h4')?.scrollIntoView({block:'start',behavior:'instant'});return;}
+ if(action==='friction-cancel'){if(!connectedAi.busy){connectedAi.draft=null;connectedAi.error='';render();}return;}
+ if(action==='friction-run'){
+  if(connectedAi.busy||!connectedAi.draft||!user||role!=='editor')return;
+  const context=clone(connectedAi.draft),owner=project;connectedAi.busy=true;connectedAi.error='';render();
+  try{const d=await api('analyze-frictions',{consent:true,context});if(!validFrictionAnalysis(d.analysis))throw Error('La réponse IA reçue est invalide.');if(project===owner){connectedAi.result=d.analysis;connectedAi.draft=null;msg('Analyse IA reçue : relis les hypothèses, puis conserve le brouillon ou ajoute les pistes utiles.');}}
+  catch(err){connectedAi.error=err.message;msg(err.message);}
+  finally{connectedAi.busy=false;render();if(connectedAi.result)$('#frictionAiResultTitle')?.focus();}return;
+ }
+ if(action==='friction-keep'){
+  if(!connectedAi.result)return;ex.frictionAnalysis=clone(connectedAi.result);connectedAi.result=null;changed();render();msg('Brouillon IA ajouté à la copie de travail. Clique sur Enregistrer pour le retrouver sur tes autres appareils.');return;
+ }
+ if(action==='friction-use'){
+  const analysis=connectedAi.result||ex.frictionAnalysis,f=analysis?.report.frictions[Number(b.dataset.index)];if(!f)return;
+  const addition=`Hypothèse à vérifier — ${f.title}\n${f.problem}\nMaillon : ${f.step} · Personnes : ${f.people}\nConséquence possible : ${f.effect}\nÉléments déclarés : ${f.evidence}\nQuestion terrain : ${f.question}\nObservation : ${f.observation}\nÀ mesurer : ${f.measurement}\nChevauchements : ${f.overlap}${f.opportunity?'\nQuestion d’opportunité : '+f.opportunity:''}${f.sourceRef?'\nSource : '+f.sourceRef:''}`;
+  if(ex.friction.includes(addition)){msg('Cette piste est déjà dans la friction.');return;}
+  const next=[ex.friction,addition].filter(Boolean).join('\n\n');if(new TextEncoder().encode(next).length>12000){msg('Le texte de friction est trop long. Reformule les pistes utiles avant de continuer.');return;}
+  ex.friction=next;changed();render();msg('Piste ajoutée au texte existant. Tu peux la reformuler, puis Enregistrer.');return;
+ }
+ if(action==='friction-analysis-export'){const a=connectedAi.result||ex.frictionAnalysis;if(a)download('analyse-frictions-ia.txt','text/plain;charset=utf-8',frictionAnalysisText(a));return;}
  if(action.startsWith('ai-')){aiPrompt=buildPrompt(ex,c,action.slice(3));render();const panel=$('#aiPrompt')?.closest('details');if(panel)panel.open=true;$('#aiPrompt')?.focus();msg('Consigne préparée localement. Relis et retire les données sensibles avant de l’utiliser dans un outil autorisé.');return;}
  if(action==='download-prompt'){if(aiPrompt)download('consigne-analyse-ia.txt','text/plain;charset=utf-8',aiPrompt);return;}
  if(action==='export-exploration'){if(!validExploration(ex)){msg('La fiche comporte un statut ou un champ invalide. Vérifier la fiche avant export.');return;}exportRows('exploration-transposition.csv',explorationRows(project));return;}
@@ -134,14 +216,14 @@ $('#content').addEventListener('click',e=>{
  changed();render();
 });
 document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>{if(validateForCalculation()){tab=b.dataset.tab;render();}}));
-$('#demo').addEventListener('click',async()=>{if(!guard())return;try{const r=await fetch('assets/exemple.json');open(await r.json());msg('Exemple entièrement fictif : coûts illustratifs, gains et évaluations à renseigner.');}catch(e){msg(e.message);}});
+$('#demo').addEventListener('click',async()=>{if(!guard())return;try{const r=await fetch('assets/exemple.json');open(await r.json());msg('Exemple entièrement fictif : mesures, notes et décisions à renseigner.');}catch(e){msg(e.message);}});
 $('#new').addEventListener('click',()=>{if(!guard())return;project={name:'Nouveau projet IA',context:'',status:'Étude — à documenter',sources:'',rates:{police:120,civil:80},years:3,discount:0,criteria:[{id:'quality',name:'Qualité et utilité métier',weight:40,blocking:false},{id:'data',name:'Données, droits et admissibilité',weight:35,blocking:true},{id:'integration',name:'Intégration et exploitation',weight:25,blocking:false}],alternatives:[]};project.alternatives=[blankAlternative('A — Solution à étudier')];open(project);changed();});
 $('#home').addEventListener('click',home);
 $('#json').addEventListener('click',()=>{if(validateProjectDocument())download('projet-benchmark.json','application/json',JSON.stringify({format:'benchmark-finances-v1',exportedAt:new Date().toISOString(),data:project},null,2));});
 $('#csv').addEventListener('click',()=>{if(validateProjectDocument())exportCsv();});
 $('#print').addEventListener('click',()=>{if(!validateProjectDocument())return;tab='report';render();window.print();});
 $('#save').addEventListener('click',async()=>{if(!validateProjectDocument())return;$('#save').disabled=true;try{const d=await api('save',{id,version,data:project});({id,version}=d);dirty=false;render();msg('Projet enregistré. Une version est conservée dans le journal.');await loadProjects();}catch(e){msg(e.message);}finally{$('#save').disabled=!user||role!=='editor';}});
-$('#login').addEventListener('submit',async e=>{e.preventDefault();try{const f=new FormData(e.target),d=await api('login',{user:f.get('user'),password:f.get('password')});({user,role,csrf}=d);e.target.reset();account();await loadProjects();msg('Connexion établie.');}catch(e){msg(e.message);}});
+$('#login').addEventListener('submit',async e=>{e.preventDefault();try{const f=new FormData(e.target),d=await api('login',{user:f.get('user'),password:f.get('password')});({user,role,csrf}=d);e.target.reset();account();await aiInfo();await loadProjects();msg('Connexion établie.');}catch(e){msg(e.message);}});
 // Import uses an isolated candidate and a full structural guard before rendering.
 function validImport(p){
  if(p?.exploration!==undefined&&!validExploration(p.exploration))return false;

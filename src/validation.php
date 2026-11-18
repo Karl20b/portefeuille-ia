@@ -51,12 +51,23 @@ function valid_exploration_url(mixed $v): bool {
  $u=parse_url($v);return is_array($u)&&in_array($u['scheme']??'', ['http','https'],true)&&!empty($u['host'])&&!isset($u['user'])&&!isset($u['pass']);
 }
 function validate_exploration(array $e): void {
+ if(isset($e['sourceMaterial'])){require_valid(is_array($e['sourceMaterial'])&&txt($e['sourceMaterial']['reference']??null,1000)&&txt($e['sourceMaterial']['excerpt']??null,96000)&&mb_strlen($e['sourceMaterial']['excerpt'],'UTF-8')<=24000);}
+ if(isset($e['frictionAnalysis'])){
+  $a=$e['frictionAnalysis'];require_valid(is_array($a));
+  foreach(['generatedAt','provider','model','methodVersion','contextHash'] as $k)require_valid(txt($a[$k]??null,300));
+  require_valid(preg_match('/^[a-f0-9]{64}$/D',$a['contextHash'])===1&&rows($a['references']??null,10));
+  foreach($a['references'] as $r){require_valid(is_array($r));foreach(['id','title','source'] as $k)require_valid(txt($r[$k]??null,2000));}
+  require_once __DIR__.'/friction_ai.php';
+  try{friction_ai_report($a['report']??null);}catch(FrictionAiException){require_valid(false);}
+ }
  foreach(['friction','strategy','baseline','users','methodLog'] as $k)require_valid(txt($e[$k]??null));
  require_valid(rows($e['cases']??null,20));$ids=[];
  foreach($e['cases'] as $c){
   require_valid(is_array($c)&&txt($c['id']??null,80)&&preg_match('/^[a-zA-Z0-9_-]+$/D',$c['id'])===1&&!isset($ids[$c['id']]));$ids[$c['id']]=true;
   foreach(['title','organisation','sector','sourceUrl','sourceDate','checkedOn','sourceNotes','mechanism','transfer','limits','test','metrics','decisionDate','reason','reviewSignal','reviewDate','validator','aiNotes'] as $k)require_valid(txt($c[$k]??null,in_array($k,['title','organisation','sector','validator'],true)?300:12000));
   foreach(['sourceDate','checkedOn','decisionDate','reviewDate'] as $k)require_valid(valid_exploration_date($c[$k]));
+  if(array_key_exists('benchmarkType',$c))require_valid(in_array($c['benchmarkType'],['','functional','generic'],true));
+  if(array_key_exists('analysisDate',$c))require_valid(valid_exploration_date($c['analysisDate']));
   require_valid($c['sourceUrl']===''||valid_exploration_url($c['sourceUrl']));
   require_valid(txt($c['secondaryDomain']??null,20));
   $domains=['analytical','perceptive','generative','agentic'];
@@ -70,7 +81,8 @@ function validate_exploration(array $e): void {
    require_valid(in_array($c['domain'],$domains,true)&&in_array($c['circle'],['efficiency','service','ecosystem','innovation'],true));
    foreach(['friction','strategy','baseline','users'] as $k)require_valid(trim($e[$k])!=='');
    foreach(['title','organisation','sector','sourceDate','checkedOn','sourceNotes','mechanism','transfer','limits','test','metrics'] as $k)require_valid(trim($c[$k])!=='');
-   require_valid(valid_exploration_url($c['sourceUrl'])&&in_array($c['proof'],['experience','measured','historical'],true));
+   require_valid(valid_exploration_url($c['sourceUrl'])&&in_array($c['proof'],['announcement','pilot','experience','measured','historical'],true));
+   if(in_array($c['proof'],['announcement','pilot'],true))require_valid(trim($c['reviewSignal'])!=='');
    foreach($c['dependencies'] as $value)require_valid(is_string($value)&&trim($value)!=='');
    foreach($c['evaluation'] as $value)require_valid(is_string($value)&&trim($value)!=='');
   }
