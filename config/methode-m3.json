@@ -1,0 +1,77 @@
+{
+  "version": "public-2026-11-18.1",
+  "title": "Repères pour explorer les frictions",
+  "scope": "Repères génériques de fonctionnement pour l’enquête, les cartes d’empathie et l’exploration de frictions. Aucun document pédagogique original, entretien réel, cas privé ou chiffre d’exemple n’est redistribué.",
+  "cards": [
+    {
+      "id": "M3-FRICTION",
+      "stage": "frictions",
+      "title": "Décrire le travail réel avant la solution",
+      "source": "Règle de fonctionnement de l’application — synthèse méthodologique à adapter au cadre de la formation.",
+      "text": "Décrire une difficulté concrète, les personnes, la fonction et le maillon de la chaîne de valeur. Séparer le problème, ses causes possibles et ses effets. Ne pas commencer par l’IA ni reformuler une solution comme un besoin. Chercher pertes de temps, reprises et erreurs, qualité du service, coûts cachés et risques. Une cause transverse n’est pas une seconde ligne de temps si ses effets sont déjà comptés ailleurs."
+    },
+    {
+      "id": "M3-ENQUETE",
+      "stage": "frictions",
+      "title": "Passer du déclaré à l’observé",
+      "source": "Règle de fonctionnement de l’application — synthèse méthodologique à adapter au cadre de la formation.",
+      "text": "Relier chaque friction à une source d’enquête et à sa méthode. Un propos rapporté ne vaut pas mesure. Prévoir entretiens et méthode non déclarative : observation, document ou chronométrage sur tâches comparables. Demander le dernier exemple concret, la fréquence et le temps par occurrence. Ne jamais inventer de verbatim, d’observation ou de source. Identifier ce qui manque avant de chiffrer."
+    },
+    {
+      "id": "M3-CHAINE",
+      "stage": "frictions",
+      "title": "Relier friction, processus et cas",
+      "source": "Règle de fonctionnement de l’application — synthèse méthodologique à adapter au cadre de la formation.",
+      "text": "Repérer l’étape du processus, le passage de main, l’outil et l’écart entre pratique et procédure. Conserver la traçabilité source d’enquête → friction → cas d’usage → prérequis. Plusieurs frictions peuvent nourrir un cas et une friction plusieurs cas ; éviter les gains qui se chevauchent. Ne pas inventer d’identifiants officiels de friction avant sélection humaine."
+    },
+    {
+      "id": "M3-REMEDE",
+      "stage": "qualification",
+      "title": "Justifier IA ou autre remède",
+      "source": "Règle de fonctionnement de l’application — synthèse méthodologique à adapter au cadre de la formation.",
+      "text": "À l’étape de qualification, vérifier si réorganisation, règle, recherche ou automatisation simple suffisent. Si l’IA apporte une utilité justifiée, décrire une approche acheter, acheter et intégrer ou développer, sans nom de produit à ce stade M3. Un cas IA en attente de données reste un cas IA avec un prérequis explicite, pas un cas prêt à lancer. Les remèdes sans IA restent dans le chiffrage et la feuille de route."
+    },
+    {
+      "id": "M3-FINANCE",
+      "stage": "frictions",
+      "title": "Distinguer coût du statu quo et gain évitable",
+      "source": "Règle de fonctionnement de l’application — synthèse méthodologique à adapter au cadre de la formation.",
+      "text": "Coût annuel de référence = temps par occurrence × occurrences annuelles × taux horaire complet, seulement lorsque les données et leur sens sont établis. Le temps consacré à une tâche n’est pas entièrement du temps perdu ou supprimable. Le gain suppose une part réellement évitable et le contrôle restant. Séparer capacité libérée et économie budgétaire. Coûts : initial, intégration, formation et récurrent. Ne pas compter deux fois les charges déjà incluses, un travail interne et son devis de remplacement, ni des gains qui se chevauchent. Le chiffre d’affaires potentiel et la qualité restent à part ; ne pas additionner chiffre d’affaires et temps gagné. Aucun taux, volume ou gain d’un exemple externe ne devient une hypothèse locale."
+    },
+    {
+      "id": "M3-PRIORISATION",
+      "stage": "priorisation",
+      "title": "Séparer priorisation M3 et comparaison de produits",
+      "source": "Règle de fonctionnement de l’application — synthèse méthodologique à adapter au cadre de la formation.",
+      "text": "Le portefeuille M3 priorise des cas selon valeur et faisabilité ; le benchmark de variantes ou de produits est un autre niveau. Justifier les poids avec la stratégie M2. Examiner valeur métier, stratégie, impacts, rentabilité ; données, intégration, changement et risques. F1 bloquant impose un prérequis. Le score éclaire la décision et n’annule aucune condition ; un écart de classement se justifie. L’expert conteste les notes et ses changements sont tracés. L’assistant de frictions ne remplit pas les notes."
+    },
+    {
+      "id": "M3-LIVRABLE",
+      "stage": "parcours",
+      "title": "Garder le livrable final en vue",
+      "source": "Règle de fonctionnement de l’application — synthèse méthodologique à adapter au cadre de la formation.",
+      "text": "Parcours de référence : mandat et parties prenantes ; enquête et chaîne de valeur ; frictions objectivées ; catalogue traçable de cas ; verdict et prérequis ; pondération et priorisation ; avis expert ; choix argumenté, statu quo et deux variantes, feuille de route, changement, cas écartés et retour de méthode. La cible du portefeuille est 5 à 10 cas dont au moins deux hors efficacité ; elle ne signifie pas que chaque projet doit produire dix frictions. Les dates et chiffres de l’exemple ne sont pas des échéances ni des obligations déduites pour l’utilisateur. Le benchmark intersectoriel est encouragé ; ses chiffres ne se transfèrent pas au projet."
+    },
+    {
+      "id": "APP-RH",
+      "stage": "frictions",
+      "title": "Préparation d’entretiens : pistes génériques",
+      "source": "Règle de fonctionnement de l’application — synthèse méthodologique à adapter au cadre de la formation.",
+      "text": "Si le projet concerne la préparation d’entretiens : explorer recherche des supports, remobilisation des méthodes, structuration de la préparation, adaptation de l’échange, demandes de conseil, qualité et maintenance du corpus DRH. Ne pas inférer les besoins ou comportements d’après l’âge ou la génération ; partir de la situation et des préférences exprimées. L’apprentissage réalisé pendant une préparation n’est pas une deuxième économie de temps. Le maintien des acquis et la qualité demandent leurs propres observations. Ne pas analyser ni noter une personne."
+    },
+    {
+      "id": "M3-EMPATHIE",
+      "stage": "frictions",
+      "title": "Lire une source avec la carte d’empathie",
+      "source": "Règle de fonctionnement de l’application — synthèse méthodologique à adapter au cadre de la formation.",
+      "text": "Une carte porte sur une fonction utilisateur et un processus identifiés ; renseigner la source et sa méthode (entretien, observation, document), sa date et son repère de page si disponibles. Examiner ce qui est dit (citations exactes), ce qui est fait (gestes, outils, contournements), ce qui préoccupe et ce qui est ressenti. Les rubriques pense et ressent ne prouvent pas un état mental : distinguer propos exprimés, observations rapportées et interprétations à confirmer. Un document qui rapporte une observation n’est pas une observation faite par l’IA. Une citation doit être retrouvable mot pour mot dans l’extrait fourni ; aucune citation inventée ou paraphrase entre guillemets. Une carte d’exemple illustre la structure ; ses noms, échéances, assertions et statistiques ne deviennent pas des connaissances générales ni des preuves vérifiées."
+    },
+    {
+      "id": "M3-OPPORTUNITE",
+      "stage": "frictions",
+      "title": "Relier frustration, friction et question d’opportunité",
+      "source": "Règle de fonctionnement de l’application — synthèse méthodologique à adapter au cadre de la formation.",
+      "text": "Pour chaque frustration distincte appuyée sur la source, proposer une friction factuelle reliée au processus, puis une question : Comment pourrions-nous [verbe + résultat] pour [utilisateur] [dans quelle situation] ? Chercher le résultat utile, sans présupposer un chatbot, un RAG ou un produit IA. Une question d’opportunité n’est pas une question d’enquête : la première ouvre des solutions, la seconde vérifie le problème. Ne pas dédoubler une même frustration pour atteindre un nombre imposé. Lier à une friction existante si elle est documentée ; sinon proposer une nouvelle piste sans attribuer soi-même un identifiant F1/F2 officiel. Le candidat valide la source et le rattachement avant d’ajouter la friction au portefeuille."
+    }
+  ]
+}
