@@ -1,5 +1,6 @@
 config/*
 !config/config.example.php
+!config/methode-m3.json
 var/*
 !var/.gitkeep
 .env
@@ -9,3 +10,6 @@ var/*
 *.zip
 .DS_Store
 node_modules/
+vendor-pdf/
+public/assets/vendor-ocr-v1/
+__pycache__/

@@ -1,9 +1,13 @@
 # Portefeuille IA — benchmark et finances
 
+Application gratuite à installer sur son propre hébergement. Aucun compte GitHub n’est nécessaire pour télécharger le ZIP. L’hébergement, la base et les éventuels appels IA restent à la charge de chaque utilisateur.
+
 Une application en français pour comparer des solutions et établir la rentabilité prévisionnelle de projets. Chaque installation utilise son propre serveur et sa propre base MariaDB.
 
 ## Ce que permet l’application
 
+- Importer des documents (TXT, DOCX, PPTX, PDF) et lire les scans ou images par OCR français/anglais.
+- Relire le texte puis extraire les frictions avec son propre service Infomaniak, si configuré.
 - Cadrer le besoin, le statu quo et les variantes, avec ou sans IA.
 - Comparer des critères pondérés, leurs preuves et les conditions bloquantes.
 - Saisir les dépenses, le travail interne, la formation et les coûts mensuels.
@@ -27,7 +31,7 @@ GitHub héberge les sources. Le site PHP doit être installé sur un hébergemen
 
 ## Technique
 
-PHP 8.5, PDO MySQL/MariaDB, sessions, JSON ; MariaDB 10.11 ; serveur Apache avec HTTPS. HTML, CSS et JavaScript natifs, sans Composer, sans compilation et sans appel à un service IA. Installer à la racine d’un site ou sous-domaine dédié, avec `public/` comme racine HTTP.
+PHP 8.5, PDO MySQL/MariaDB, sessions, JSON ; MariaDB 10.11 ; serveur Apache avec HTTPS. HTML, CSS et JavaScript natifs, sans compilation. OCR local au navigateur avec composants statiques installés par Python 3. Lecture PDF texte avec Composer ; connexion Infomaniak facultative, désactivée par défaut. Installer à la racine d’un site ou sous-domaine dédié, avec `public/` comme racine HTTP.
 
 Les fichiers de configuration privés, les données de travail et les journaux sont exclus du dépôt. Chaque utilisateur crée ses propres comptes et mots de passe. Ne jamais déposer de configuration réelle ni d’exports de projets dans un dépôt public.
 
@@ -66,7 +70,7 @@ Un nouvel onglet accompagne la recherche de cas dans d’autres secteurs : frict
 
 Les fiches retenues et documentées peuvent préparer une variante de comparaison, avec des coûts à renseigner, des gains inconnus et des notes non attribuées. Le lien vers la fiche d’origine est conservé et les doublons sont refusés. Les déclarations de vérification et de validation sont renseignées par l’utilisateur, elles ne constituent pas une certification automatique.
 
-L’aide IA est facultative et sans appel réseau : trois consignes peuvent être préparées (exploration, transposition, préparation du benchmark), relues puis téléchargées en TXT pour utilisation dans un outil autorisé. Aucun fournisseur, compte, abonnement ou clé API n’est requis. Les réponses se reprennent manuellement dans les champs ; les notes issues de l’IA restent identifiées comme brouillons. Retirer les données sensibles avant tout envoi à un outil externe. Aucun résultat trouvé ailleurs n’est automatiquement converti en gain local.
+La préparation de consignes reste facultative et sans appel réseau : trois consignes peuvent être préparées (exploration, transposition, préparation du benchmark), relues puis téléchargées en TXT pour utilisation dans un outil autorisé. Aucun fournisseur, compte, abonnement ou clé API n’est requis pour cette préparation de consignes. La V3 ajoute une connexion Infomaniak facultative, à configurer séparément. Les réponses se reprennent manuellement dans les champs ; les notes issues de l’IA restent identifiées comme brouillons. Retirer les données sensibles avant tout envoi à un outil externe. Aucun résultat trouvé ailleurs n’est automatiquement converti en gain local.
 
 L’export JSON conserve les fiches et leur journal de méthode, le CSV spécifique exporte l’analyse structurée et le dossier imprimable inclut les fiches complètes. Le CSV financier garde son format existant. La matrice domaines × cercles aide à explorer, sans imposer de remplir toutes les cases.
 
@@ -75,3 +79,14 @@ Compatibilité : les projets et exports V1 restent lisibles. Aucune modification
 Contrôles : `node tests/explore.test.mjs` et `php tests/explore.test.php`, en complément des tests financiers. Le second vérifie les anciens projets, les statuts documentés, les sources, les dates et les liens entre fiches et variantes. Les fixtures sont entièrement fictives.
 
 Méthode : adaptation du support M3 « Benchmark intersectoriel », séance du 16.11.2026 ; inspiration : https://www.micklevy.com/ia-agents-les-meilleurs-cas-dusage-pour-lentreprise/ . Ni le support pédagogique ni le catalogue de 101 cas ne sont redistribués dans le dépôt.
+
+
+## Version 3 — Import de documents, OCR et analyse IA facultative
+
+Dans **Explorer et transposer → Document source et carte d’empathie**, importer un document texte ou cliquer sur **Lire un scan ou une image (OCR)**. Les scans PDF, PNG, JPG/JPEG et WebP sont reconnus dans le navigateur en français et anglais, avec des composants servis par votre propre site. Aucun service de conversion externe n’est utilisé. Limites : 8 Mo par fichier et 10 pages par lecture OCR ; texte retenu de 24 000 caractères maximum. L’écriture manuscrite est peu fiable.
+
+Relire et corriger le texte reconnu, puis choisir **Utiliser le texte et préparer l’analyse IA**. Le bouton **Envoyer à Infomaniak et analyser** transmet uniquement le contexte affiché et le texte retenu au compte Infomaniak configuré par votre administrateur. Les pistes, citations et hypothèses restent à vérifier ; aucune note, économie ou décision n’est remplie automatiquement. Sans clé IA, l’import/OCR, les pistes locales, les consignes exportables et le benchmark restent utilisables après connexion.
+
+**Installation V3 :** consulter [le guide complet](INSTALLATION.md), notamment les sections « Installer les lecteurs de documents et l’OCR », « Activer son propre service IA » et « Mettre à jour depuis V1/V2 ». Les lecteurs OCR ne sont pas inclus dans le ZIP GitHub : la commande Python indiquée les installe (environ 74 Mo). Le dépôt ne contient ni accès MariaDB, ni clé IA, ni projets ou documents privés. Les supports originaux de cours et le classeur privé du brevet ne sont pas redistribués.
+
+Tests complémentaires : `node --test tests/*.test.mjs`, puis `php tests/friction-ai.test.php`, `php tests/source-import.test.php` et `php tests/pdf-import.test.php` après installation des dépendances PDF. Les tests utilisent des cas fictifs et ne réalisent aucun appel IA.
