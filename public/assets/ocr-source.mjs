@@ -63,7 +63,7 @@ export async function recognizeOcr(job,{start=1,end=1,signal,onProgress=()=>{}}=
   }
   if(!parts.length)throw Error('Aucun texte suffisamment lisible. Essaie une image plus nette, droite et bien éclairée.');
   const text=parts.map(p=>`[${p.label}]\n${p.text}`).join('\n\n');
-  const warnings=['Texte obtenu par OCR, à vérifier contre le document original : des lettres, nombres, noms ou négations peuvent être mal reconnus. Une citation retrouvée dans ce texte ne garantit pas sa fidélité à l’image.','La reconnaissance a été effectuée dans ce navigateur. Aucun scan ou image n’a été envoyé à un service de conversion externe. Seul le texte retenu peut être envoyé ensuite à Infomaniak.'];
+  const warnings=['Texte obtenu par OCR, à vérifier contre le document original : des lettres, nombres, noms ou négations peuvent être mal reconnus. Une citation retrouvée dans ce texte ne garantit pas sa fidélité à l’image.','La reconnaissance a été effectuée dans ce navigateur. Aucun scan ou image n’a été envoyé à un service de conversion externe. Seul le texte retenu peut être envoyé ensuite au service IA configuré.'];
   if(start!==1||end!==job.pages)warnings.push(`Seules les pages ${start} à ${end} sur ${job.pages} ont été lues. Les autres pages ne sont pas analysées.`);
   if(unread.length)warnings.push('Pages sans texte lisible reconnu : '+unread.join(', ')+'. Elles ne sont pas considérées comme analysées.');
   if(uncertain.length)warnings.push('Reconnaissance incertaine, contrôle renforcé conseillé : page(s) '+uncertain.join(', ')+'.');
