@@ -99,7 +99,7 @@ Le corpus `config/methode-m3.json` contient uniquement des repères génériques
 
 ## 6. Premier usage
 
-Ouvrir l’URL du site. Déplier « Connexion à l’application hébergée » et utiliser le compte applicatif. Ouvrir l’exemple fictif ou créer un projet vide, puis cliquer sur « Enregistrer ».
+Ouvrir l’URL du site. Déplier « Connexion à l’application hébergée » et utiliser le compte applicatif. Importer un document d’initialisation ou créer un projet vide, explorer les frictions puis cliquer sur « Enregistrer ».
 
 Pour reprendre un projet exporté, choisir « Importer un JSON », vérifier son contenu puis l’enregistrer. La démonstration sans connexion ne sauvegarde rien en base.
 
@@ -131,3 +131,14 @@ Sauvegarder les fichiers privés et la base avant une mise à jour. Préserver `
 5. Recharger le site, se reconnecter, ouvrir un projet et refaire les vérifications avec un exemple fictif. Les nouveaux fichiers portent des versions de cache ; ne pas supprimer les données pour résoudre un ancien onglet.
 
 Le mode démonstration conserve les exports JSON/CSV/PDF. L’import de sources et l’OCR sont proposés dans la session d’un rédacteur d’une installation configurée. L’enregistrement reste explicite : cliquer sur **Enregistrer** après avoir retenu la source ou conservé une analyse.
+
+
+## Utiliser le parcours et les statuts V4
+
+1. Sur l’accueil, choisir **Importer un document** (session rédacteur requise) ou **Créer un projet vide**. L’import crée une copie de travail, sans sauvegarde automatique. La procédure d’import/OCR et la relecture restent celles décrites ci-dessus. Un import en erreur laisse la fiche à corriger, sans créer de record en base.
+2. Explorer les frictions à partir de la source. Un cas observé dans un autre secteur peut être ajouté, mais n’est pas requis pour passer au cadrage.
+3. Choisir **Prototype interne**, **Solution externe**, **Comparer les deux approches** ou laisser **À préciser**, puis continuer vers le cadrage. Aucun choix de produit ni gain n’est déduit automatiquement.
+4. Utiliser **Tous mes projets** pour revenir à l’accueil ; le dialogue protège les modifications non enregistrées.
+5. Pour sortir un projet du périmètre actif, ouvrir **Écarter ou clôturer**, choisir son statut et expliquer le motif. Le changement enregistre aussi les modifications du projet. Il peut être rouvert depuis la section des projets écartés ou clôturés. Les versions restent conservées dans `bf_events` ; un conflit de version reste refusé.
+
+Pour mettre à jour une V3, remplacer ensemble les fichiers publics et `src/validation.php`, ajouter `public/assets/portfolio.mjs`, puis recharger après avoir enregistré ou exporté le travail en cours. Ne modifier ni la base ni les identifiants. Le portefeuille de chaque installation reste indépendant ; les priorités de l’auteur ne sont pas importées.
